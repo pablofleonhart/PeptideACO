@@ -2,9 +2,13 @@ import copy
 
 class AminoAcids( object ):
 
+	pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s} {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}"
 	ATOM_TAG = "ATOM"
 	END_TAG = "TER"
 	ATOM_REF = "CA"
+	OXIGEN_CARBOXYL = "OC"
+	HYDROGEN_CARBOXYL = "HC"
+	HYDROGEN_AMINO = "1H"
 
 	dic = { "A": "files/alanine.pdb",
 			"R": "files/arginine.pdb",
@@ -29,66 +33,106 @@ class AminoAcids( object ):
 
 	dicPositions = {}
 	dicAtoms = {}
-	atoms = []
-	posAtoms = []
-	translation = []
 
 	def __init__( self, sequence ):
 		self.sequence = sequence
 
 	def generatePDB( self ):
-		fileName = None
+		self.readSequence()
+		print self.dicPositions
+		print self.dicAtoms
 
+		self.matchAminoAcids()
+
+	def readSequence( self ):
 		for i in range( 0, len( self.sequence ) ):
+			fileName = None
+			
 			if self.sequence[i] is not None:
 				fileName = self.dic.get( self.sequence[i] )
 
 			if fileName is not None:
-				self.atoms = []
-				self.posAtoms = []
-				self.translation = []
-				atom = None
-				pdb = open( fileName, "r" )
+				if self.dicPositions.get( self.sequence[i] ) is None or self.dicAtoms.get( self.sequence[i] ) is None:
+					atoms = []
+					posAtoms = []
+					translation = []
+					atom = None
+					pdb = open( fileName, "r" )
 
-				stop = False
+					stop = False
 
-				while not stop:
-					line = pdb.readline()
-					if not line:
-						stop = True
-					else:
-						line = line.split()
-						if line[0] == self.END_TAG:
+					while not stop:
+						line = pdb.readline()
+						if not line:
 							stop = True
-						elif line[0] == self.ATOM_TAG:
-							atom = line[2]				
-							pos = map( float, line[5:8] )
+						else:
+							line = line.split()
+							if line[0] == self.END_TAG:
+								stop = True
+							elif line[0] == self.ATOM_TAG:
+								atom = line[2]				
+								pos = map( float, line[5:8] )
 
-							if atom == self.ATOM_REF:
-								self.translation = copy.deepcopy( pos )
-								for j in xrange( 3 ):
-									self.translation[j] *= -1
+								if i == 0 and atom == self.ATOM_REF:
+									translation = copy.deepcopy( pos )
+									for j in xrange( 3 ):
+										translation[j] *= -1
 
-							self.atoms.append( atom )
-							self.posAtoms.append( pos )
+								atoms.append( atom )
+								posAtoms.append( pos )
 
-				pdb.close()
-				print self.atoms
-				print self.posAtoms
-				print self.translation
+					pdb.close()
+					print atoms
+					print posAtoms
+					print translation
 
-				self.translateAtoms()
-				print self.sequence[i]
-				self.dicPositions[self.sequence[i]] = []
-				self.dicPositions[self.sequence[i]].append( self.posAtoms )
+					if i == 0:
+						self.translateAtoms( posAtoms, translation )
 
-				self.dicAtoms[self.sequence[i]] = []
-				self.dicAtoms[self.sequence[i]].append( self.atoms )
+					print self.sequence[i]
+					self.dicPositions[self.sequence[i]] = []
+					self.dicPositions[self.sequence[i]] = copy.deepcopy( posAtoms )
 
-		print self.dicPositions
-		print self.dicAtoms
+					self.dicAtoms[self.sequence[i]] = []
+					self.dicAtoms[self.sequence[i]] = copy.deepcopy( atoms )
 
-	def translateAtoms( self ):
-		for i in range( len( self.atoms ) ):
+			'''pdb = open( fileName, "r" )
+			pdbNew = open( "newPDB.pdb", "w" )
+
+			stop = False
+
+			while not stop:
+				line = pdb.readline()
+				if not line:
+					stop = True
+				else:
+					line = line.split()
+
+					if line[0] == self.END_TAG:
+						pdbNew.write( "TER" )
+						stop = True
+
+					elif line[0] == self.ATOM_TAG:
+						index = int( line[1] ) - 1
+
+						pdbNew.write( self.pdbPattern.format( line[0], int( line[1] ), line[2], " ", line[3], " ", \
+									  int( line[4] ), " ", self.posAtoms[index][0], self.posAtoms[index][1], self.posAtoms[index][2], float( line[8] ), float( line[9] ) ) + "\n" )
+
+			pdb.close()
+			pdbNew.close()'''
+
+	def translateAtoms( self, posAtoms, translation ):
+		for i in range( len( posAtoms ) ):
 			for j in range( 3 ):
-				self.posAtoms[i][j] += self.translation[j]
+				posAtoms[i][j] += translation[j]
+
+	def matchAminoAcids( self ):
+		for i in range( 0, len( self.sequence ) ):
+			key = self.sequence[i]
+			posN = []
+			if self.dicAtoms.get( key ) is not None:
+				for ( atom, pos ) in zip( self.dicAtoms[key], self.dicPositions[key] ):
+					if atom == self.OXIGEN_CARBOXYL:
+						posN = pos
+
+			print posN
