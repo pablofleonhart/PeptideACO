@@ -7,9 +7,11 @@ class AminoAcids( object ):
 	END_TAG = "TER"
 	ATOM_REF = "CA"
 	OXIGEN_CARBOXYL = "OC"
-	HYDROGEN_CARBOXYL = ( "HC", "HOC" )
+	HYDROGEN_CARBOXYL = ( "HC", "HOC", "HO" )
 	HYDROGEN_AMINO = ( "H", "1H" )
 	NITROGEN = "N"
+	dicContent = {}
+	dicResults = {}
 
 	dic = { "A": "files/alanine.pdb",
 			"R": "files/arginine.pdb",
@@ -32,20 +34,19 @@ class AminoAcids( object ):
 			"Y": "files/tyrosine.pdb",
 			"V": "files/valine.pdb" }
 
-	dicPositions = {}
-	dicAtoms = {}
-	dicContent = {}
-	dicResults = []
-
 	def __init__( self, sequence ):
 		self.sequence = sequence
 
 	def generatePDB( self ):
 		self.readSequence()
-		print self.dicPositions
-		print self.dicAtoms
-		print self.dicContent.get( "V" )[1]
-		self.combineAminoAcids()
+		self.matchAminoAcids()
+		self.writePDBFile()
+
+	def updatePositions( self, original, newValues ):
+		for j in range( 0, len( original ) ):
+			original[j][5] = newValues[j][0]
+			original[j][6] = newValues[j][1]
+			original[j][7] = newValues[j][2]
 
 	def readSequence( self ):
 		for i in range( 0, len( self.sequence ) ):
@@ -55,8 +56,7 @@ class AminoAcids( object ):
 				fileName = self.dic.get( self.sequence[i] )
 
 			if fileName is not None:
-				if self.dicPositions.get( self.sequence[i] ) is None or self.dicAtoms.get( self.sequence[i] ) is None:
-					atoms = []
+				if self.dicContent.get( self.sequence[i] ) is None:
 					posAtoms = []
 					translation = []
 					atom = None
@@ -70,10 +70,9 @@ class AminoAcids( object ):
 						if not line:
 							stop = True
 						else:
-							line = line.split()							
+							line = line.split()
 							if line[0] == self.END_TAG:
 								stop = True
-								content.append( line )
 							elif line[0] == self.ATOM_TAG:
 								content.append( line )
 								atom = line[2]				
@@ -84,51 +83,16 @@ class AminoAcids( object ):
 									for j in xrange( 3 ):
 										translation[j] *= -1
 
-								atoms.append( atom )
 								posAtoms.append( pos )
 
 					pdb.close()
-					print atoms
-					print posAtoms
-					print translation
 
 					if i == 0:
 						self.translateAtoms( posAtoms, translation )
-
-					print self.sequence[i]
-					self.dicPositions[self.sequence[i]] = []
-					self.dicPositions[self.sequence[i]] = copy.deepcopy( posAtoms )
-
-					self.dicAtoms[self.sequence[i]] = []
-					self.dicAtoms[self.sequence[i]] = copy.deepcopy( atoms )
+						self.updatePositions( content, posAtoms )						
 
 					self.dicContent[self.sequence[i]] = []
 					self.dicContent[self.sequence[i]] = content
-
-			'''pdb = open( fileName, "r" )
-			pdbNew = open( "newPDB.pdb", "w" )
-
-			stop = False
-
-			while not stop:
-				line = pdb.readline()
-				if not line:
-					stop = True
-				else:
-					line = line.split()
-
-					if line[0] == self.END_TAG:
-						pdbNew.write( "TER" )
-						stop = True
-
-					elif line[0] == self.ATOM_TAG:
-						index = int( line[1] ) - 1
-
-						pdbNew.write( self.pdbPattern.format( line[0], int( line[1] ), line[2], " ", line[3], " ", \
-									  int( line[4] ), " ", self.posAtoms[index][0], self.posAtoms[index][1], self.posAtoms[index][2], float( line[8] ), float( line[9] ) ) + "\n" )
-
-			pdb.close()
-			pdbNew.close()'''
 
 	def translateAtoms( self, posAtoms, translation ):
 		for i in range( len( posAtoms ) ):
@@ -136,102 +100,43 @@ class AminoAcids( object ):
 				posAtoms[i][j] += translation[j]
 
 	def matchAminoAcids( self ):
-		for i in range( 0, len( self.sequence ) ):
-			key = self.sequence[i]
-			posOC = []
-			posHC = []
-			posHA = []
-			posN = []
-			indexOC = 0
-			indexHC = 0
-			indexHA = 0
-			indexN = 0
-			keyContent = copy.deepcopy( self.dicContent.get( key ) )
-
-			if self.dicAtoms.get( key ) is not None:
-				for ( atom, pos ) in zip( self.dicAtoms[key], self.dicPositions[key] ):
-					if atom == self.OXIGEN_CARBOXYL and i < len( self.sequence )-1:
-						indexOC = zip( self.dicAtoms[key], self.dicPositions[key] ).index( ( atom, pos ) )
-						#keyContent.pop( index )
-						posOC = pos
-
-					elif atom in self.HYDROGEN_CARBOXYL and i < len( self.sequence )-1:
-						indexHC = zip( self.dicAtoms[key], self.dicPositions[key] ).index( ( atom, pos ) )
-						#keyContent.pop( index )
-						posHC = pos
-
-					if atom in self.HYDROGEN_AMINO and i > 0:
-						indexHA = zip( self.dicAtoms[key], self.dicPositions[key] ).index( ( atom, pos ) )
-						posHA = pos
-
-			print posOC, indexOC
-			print posHC, indexHC
-			print posHA, indexHA
-			#print keyContent
-
-	def combineAminoAcids( self ):
+		key = 0
 		for i in range( 0, len( self.sequence )-1 ):
 			j = i+1
 			keyI = self.sequence[i]
 			keyJ = self.sequence[j]
-			jPosOC = []
-			jPosHC = []
-			jPosHA = []
-			jPosN = []
-			jIndexOC = 0
-			jIndexHC = 0
-			jIndexHA = 0
-			jIndexN = 0
 			iPosOC = []
-			iPosHC = []
-			iPosHA = []
-			iPosN = []
+			jPosN = []
 			iIndexOC = 0
 			iIndexHC = 0
-			iIndexHA = 0
-			iIndexN = 0
+			jIndexHA = 0
+			positionsJ = []
 
 			if i == 0:
 				keyContentI = copy.deepcopy( self.dicContent.get( keyI ) )
 
-			if self.dicAtoms.get( keyI ) is not None:
-				for ( atom, pos ) in zip( self.dicAtoms[keyI], self.dicPositions[keyI] ):
-					if atom == self.OXIGEN_CARBOXYL and i < len( self.sequence )-1:
-						iIndexOC = zip( self.dicAtoms[keyI], self.dicPositions[keyI] ).index( ( atom, pos ) )
-						#keyContent.pop( index )
-						iPosOC = pos
+			keyContentJ = copy.deepcopy( self.dicContent.get( keyJ ) )
 
-					elif atom in self.HYDROGEN_CARBOXYL and i < len( self.sequence )-1:
-						iIndexHC = zip( self.dicAtoms[keyI], self.dicPositions[keyI] ).index( ( atom, pos ) )
-						#keyContent.pop( index )
-						iPosHC = pos
+			if keyContentI is not None:
+				for k in range( 0, len( keyContentI ) ):
+					if keyContentI[k][2] == self.OXIGEN_CARBOXYL:
+						iIndexOC = k
+						iPosOC = map( float, keyContentI[k][5:8] )
 
-					if atom in self.HYDROGEN_AMINO and i > 0:
-						iIndexHA = zip( self.dicAtoms[keyI], self.dicPositions[keyI] ).index( ( atom, pos ) )
-						iPosHA = pos
+					elif keyContentI[k][2] in self.HYDROGEN_CARBOXYL:
+						iIndexHC = k
 
-			if self.dicAtoms.get( keyJ ) is not None:
-				for ( atom, pos ) in zip( self.dicAtoms[keyJ], self.dicPositions[keyJ] ):
-					if atom == self.OXIGEN_CARBOXYL and i < len( self.sequence )-1:
-						jIndexOC = zip( self.dicAtoms[keyJ], self.dicPositions[keyJ] ).index( ( atom, pos ) )
-						#keyContent.pop( index )
-						jPosOC = pos
+			if keyContentJ is not None:
+				for k in range( 0, len( keyContentJ ) ):
+					if keyContentJ[k][2] in self.HYDROGEN_AMINO:
+						jIndexHA = k
 
-					elif atom in self.HYDROGEN_CARBOXYL and i < len( self.sequence )-1:
-						jIndexHC = zip( self.dicAtoms[keyJ], self.dicPositions[keyJ] ).index( ( atom, pos ) )
-						#keyContent.pop( index )
-						jPosHC = pos
+					if keyContentJ[k][2] == self.NITROGEN:
+						jPosN = map( float, keyContentJ[k][5:8] )
 
-					if atom in self.HYDROGEN_AMINO and i > 0:
-						jIndexHA = zip( self.dicAtoms[keyJ], self.dicPositions[keyJ] ).index( ( atom, pos ) )
-						jPosHA = pos
+					positionsJ.append( map( float, keyContentJ[k][5:8] ) )
 
-					if atom == self.NITROGEN:
-						jIndexN = zip( self.dicAtoms[keyJ], self.dicPositions[keyJ] ).index( ( atom, pos ) )
-						jPosN = pos
-
-			#calculate translation of jN to iOC
-			if iPosOC > iPosHC:
+			if iIndexOC > iIndexHC:
 				keyContentI.pop( iIndexOC )
 				keyContentI.pop( iIndexHC )
 			else:
@@ -239,20 +144,33 @@ class AminoAcids( object ):
 				keyContentI.pop( iIndexOC )
 
 			translation = [ 0, 0, 0 ]
-			print iPosOC
-			print jPosN
 			for k in xrange( 3 ):
-				print k
 				translation[k] = iPosOC[k] - jPosN[k]
 
-			print "translation",translation
-
-			positionsJ = copy.deepcopy( self.dicPositions[keyJ] )
-			print positionsJ
 			self.translateAtoms( positionsJ, translation )
-			print positionsJ
+			self.updatePositions( keyContentJ, positionsJ )
+			self.dicResults[str( key )] = []
+			self.dicResults[str( key )] = keyContentI
 
-			self.dicResults.append( keyContentI )
-			print self.dicResults
+			keyContentJ.pop( jIndexHA )
+			keyContentI = keyContentJ
+			key += 1
 
-			keyContentJ = copy.deepcopy( self.dicContent.get( keyI ) )
+		self.dicResults[str( key )] = []
+		self.dicResults[str( key )] = keyContentI
+
+	def writePDBFile( self ):
+		pdbNew = open( "results.pdb", "w" )
+		countTotal = 1
+		for z in range( 0, len( self.dicResults ) ):
+			key = str( z )
+			for y in range( 0, len( self.dicResults.get( key ) ) ):
+				self.dicResults.get( key )[y][1] = countTotal
+				self.dicResults.get( key )[y][4] = z+1
+				pdbNew.write( self.pdbPattern.format( self.dicResults.get( key )[y][0], countTotal, self.dicResults.get( key )[y][2], " ", self.dicResults.get( key )[y][3], " ", \
+							  z+1, " ", float( self.dicResults.get( key )[y][5] ), float( self.dicResults.get( key )[y][6] ), float( self.dicResults.get( key )[y][7] ), float( self.dicResults.get( key )[y][8] ), float( self.dicResults.get( key )[y][9] ) ) + "\n" )
+
+				countTotal += 1
+
+		pdbNew.write( "TER\n" )
+		pdbNew.close()
