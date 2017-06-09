@@ -117,8 +117,6 @@ class AminoPhiPsi:
 		x = ( normal1[0] * normal2[0] ) + ( normal1[1] * normal2[1] ) + ( normal1[2] * normal2[2] )
 		y = ( m1[0] * vector2[0] ) + ( m1[1] * vector2[1] ) + ( m1[2] * vector2[2] )
 
-		normal3 = [( ( normal1[1] * normal2[2] ) - ( normal1[2] * normal2[1] ) ), -( ( normal1[0] * normal2[2] ) - ( normal1[2] * normal2[0] ) ), ( ( normal1[0] * normal2[1] ) - ( normal1[1] * normal2[0] ) )]
-
 		angle = round( math.degrees( math.atan2( y, x ) ), 2 )
 		return angle
 

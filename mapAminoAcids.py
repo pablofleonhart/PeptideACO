@@ -101,8 +101,8 @@ class AminoAcids( object ):
 
 	def matchAminoAcids( self ):
 		key = 0
-		for i in range( 0, len( self.sequence )-1 ):
-			j = i+1
+		for i in range( 0, len( self.sequence ) - 1 ):
+			j = i + 1
 			keyI = self.sequence[i]
 			keyJ = self.sequence[j]
 			iPosOC = []
