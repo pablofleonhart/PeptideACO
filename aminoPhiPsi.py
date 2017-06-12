@@ -125,13 +125,13 @@ class AminoPhiPsi:
 		plt.xlim( -180, 180 )
 		plt.ylim( -180, 180 )
 
-		plt.xticks( np.arange( -180.1, 180.1, 30 ) )
-		plt.yticks( np.arange( -180.1, 180.1, 30 ) )
+		plt.xticks( np.arange( -180.1, 180.1, 60 ) )
+		plt.yticks( np.arange( -180.1, 180.1, 60 ) )
 		plt.xlabel( "Phi(deg)" )
 		plt.ylabel( "Psi(deg)" )
 		plt.arrow( -180, 0, 360, 0 )
 		plt.arrow( 0, -180, 0, 360 )
 
 		fig = plt.gcf()
-		fig.set_size_inches( 10.0, 10.0 )
-		fig.savefig( 'rama.png', dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype=None, format=None, transparent=False, bbox_inches=None, pad_inches=0.1, frameon=None )
+		fig.set_size_inches( 6.0, 6.0 )
+		fig.savefig( 'ramachandran.png', dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype=None, format=None, transparent=False, bbox_inches=None, pad_inches=0.1, frameon=None )
