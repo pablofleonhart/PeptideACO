@@ -13,6 +13,6 @@ else:
 if len( sequence ) > 1:
 	aminoAcids = AminoAcids( sequence )
 	aminoAcids.generatePDB()
-	aminoPhiPsi = AminoPhiPsi( "files/1eny.pdb" )
+	aminoPhiPsi = AminoPhiPsi( "results.pdb" )
 else:
 	print "You must need specify at least two amino acids!"

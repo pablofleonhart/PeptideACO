@@ -34,8 +34,9 @@ class AminoAcids( object ):
 			"Y": "files/tyrosine.pdb",
 			"V": "files/valine.pdb" }
 
-	def __init__( self, sequence ):
+	def __init__( self, sequence, fileName ):
 		self.sequence = sequence
+		self.fileName = fileName
 
 	def generatePDB( self ):
 		self.readSequence()
@@ -160,7 +161,7 @@ class AminoAcids( object ):
 		self.dicResults[str( key )] = keyContentI
 
 	def writePDBFile( self ):
-		pdbNew = open( "results.pdb", "w" )
+		pdbNew = open( self.fileName, "w" )
 		countTotal = 1
 		for z in range( 0, len( self.dicResults ) ):
 			key = str( z )

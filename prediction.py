@@ -19,14 +19,15 @@ if len( sequence ) == 0:
 	sequence = "YGGFM"
 
 if len( sequence ) > 1:
-	aminoAcids = AminoAcids( sequence, "1PLX-P.pdb" )
+	fileName = "1PLX-P.pdb"
+	aminoAcids = AminoAcids( sequence, fileName )
 	print "OK - The file '1PLX-P.pdb' with the peptide bonds was generated."
-	filename = raw_input( "- Enter the PDB filename to calc the dihedral angles: Phi and Psi, or use the '1PLX-P.pdb' by pressing 'Enter':" )
+	name = raw_input( "- Enter the PDB filename to calc the dihedral angles: Phi and Psi, or use the '" + "1PLX-P.pdb" + "' by pressing 'Enter':" )
 
-	if len( filename ) == 0:
-		filename = "1PLX-P.pdb"
+	if len( name ) == 0:
+		name = fileName
 
-	aminoPhiPsi = AminoPhiPsi( filename )
+	aminoPhiPsi = AminoPhiPsi( name )
 	print "OK - The file 'aminoPhiPsi.txt' with the dihedral angles by amino acid was generated."
 	print "OK - The file 'ramachandran.png' with the ramachandran map was generated."
 
