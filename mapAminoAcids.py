@@ -34,11 +34,23 @@ class AminoAcids( object ):
 			"Y": "files/tyrosine.pdb",
 			"V": "files/valine.pdb" }
 
+	dicNames = { "2H" : "H",
+				 "2HB" : "HB2",
+				 "1HB" : "HB3",
+				 "1H" : "H1",
+				 "2HA" : "HA2",
+				 "1HA" : "HA3",
+				 "OC" : "OXT",
+				 "2HG" : "HG2",
+				 "1HG" : "HG3",
+				 "1HE" : "HE1",
+				 "2HE" : "HE2",
+				 "3HE" : "HE3" }
+
 	def __init__( self, sequence, fileName ):
 		self.sequence = sequence
 		self.fileName = fileName
 
-	def generatePDB( self ):
 		self.readSequence()
 		self.matchAminoAcids()
 		self.writePDBFile()
@@ -160,7 +172,18 @@ class AminoAcids( object ):
 		self.dicResults[str( key )] = []
 		self.dicResults[str( key )] = keyContentI
 
+	def renameAtom( self, atom, amino ):
+		if amino == "TYR" and atom == "2H":
+			return "H2"
+
+		else:			
+			if self.dicNames.get( atom ) is not None:
+				return self.dicNames.get( atom )
+
+		return atom
+
 	def writePDBFile( self ):
+		print self.fileName
 		pdbNew = open( self.fileName, "w" )
 		countTotal = 1
 		for z in range( 0, len( self.dicResults ) ):
@@ -168,6 +191,9 @@ class AminoAcids( object ):
 			for y in range( 0, len( self.dicResults.get( key ) ) ):
 				self.dicResults.get( key )[y][1] = countTotal
 				self.dicResults.get( key )[y][4] = z+1
+
+				self.dicResults.get( key )[y][2] = self.renameAtom( self.dicResults.get( key )[y][2], self.dicResults.get( key )[y][3] )
+
 				pdbNew.write( self.pdbPattern.format( self.dicResults.get( key )[y][0], countTotal, self.dicResults.get( key )[y][2], " ", self.dicResults.get( key )[y][3], " ", \
 							  z+1, " ", float( self.dicResults.get( key )[y][5] ), float( self.dicResults.get( key )[y][6] ), float( self.dicResults.get( key )[y][7] ), float( self.dicResults.get( key )[y][8] ), float( self.dicResults.get( key )[y][9] ) ) + "\n" )
 

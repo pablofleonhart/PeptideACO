@@ -8,6 +8,17 @@ def calcRMSD( fileA, fileB ):
 	experimental = PDBReader( fileA )
 	modified = PDBReader( fileB )
 
+	modified.adjustAtoms( experimental.atoms, experimental.aminoAcids )
+
+	experimental.calcBackbonePos()
+	modified.calcBackbonePos()
+	experimental.calcCaPos()
+	modified.calcCaPos()
+
+	print( len( experimental.atoms ), len( modified.atoms ) )
+	print( experimental.atoms )
+	print( modified.atoms )
+
 	aligner = PDBAligner()
 	print "{:15s} {:6.2f}".format( "CA RMSD:", aligner.calcRMSD( experimental.alpha, modified.alpha ) )
 	#print "{:15s} {:6.2f}".format( "Backbone RMSD:", aligner.calcRMSD( experimental.backbone, modified.backbone ) )
@@ -35,7 +46,7 @@ if len( sequence ) > 1:
 	calcRMSD( "files/1PLX.pdb", "1PLX-P.pdb" )
 	# TODO: get the file 1PLX-F.pdb from ACOR
 	#calcRMSD( "files/1PLX.pdb", "1PLX-F.pdb" )
-	# TODO: plot chart RMSD vs algorithm generation
+	# TODO: plot chart RMSD VS algorithm generation
 
 else:
 	print "ERROR - You must need specify at least two amino acids!"

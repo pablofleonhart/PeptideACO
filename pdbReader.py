@@ -17,8 +17,6 @@ class PDBReader:
 		self.fileName = fileName
 
 		self.readFile()
-		self.calcBackbonePos()
-		self.calcCaPos()
 
 	def isNumber( self, value ):
 		try:
