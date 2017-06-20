@@ -183,7 +183,6 @@ class AminoAcids( object ):
 		return atom
 
 	def writePDBFile( self ):
-		print self.fileName
 		pdbNew = open( self.fileName, "w" )
 		countTotal = 1
 		for z in range( 0, len( self.dicResults ) ):

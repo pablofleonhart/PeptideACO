@@ -30,6 +30,47 @@ class AminoPhiPsi:
 		except ValueError:
 			return False
 
+	def degrees( self, x ):
+		return x*180/math.pi
+
+	def rad( self, x ):
+		return math.pi*x/180
+
+	def rotaxis2m( self, theta, vector ): 
+		vector=vector.copy() 
+		vector.normalize() 
+		c=numpy.cos(theta) 
+		s=numpy.sin(theta) 
+		t=1-c 
+		x, y, z=vector.get_array() 
+		rot=numpy.zeros((3, 3)) 
+		# 1st row 
+		rot[0, 0]=t*x*x+c 
+		rot[0, 1]=t*x*y-s*z 
+		rot[0, 2]=t*x*z+s*y 
+		# 2nd row 
+		rot[1, 0]=t*x*y+s*z 
+		rot[1, 1]=t*y*y+c 
+		rot[1, 2]=t*y*z-s*x 
+		# 3rd row 
+		rot[2, 0]=t*x*z-s*y 
+		rot[2, 1]=t*y*z+s*x 
+		rot[2, 2]=t*z*z+c 
+		return rot
+
+	def AxB( self, A, B ):   
+		A_linhas = len(A)
+		A_colunas = len(A[0])
+		B_linhas = len(B)
+		B_colunas = len(B[0])
+		if A_colunas == B_linhas:
+			comum = A_colunas
+			M = [[sum(A[m][n] * B[n][p] for n in range(comum)) \
+				for p in range(B_colunas)] for m in range(A_linhas)]
+			return M
+		else:
+			return -1
+
 	def readFile( self ):
 		if self.filename is not None:
 			pdb = open( self.filename, "r" )
@@ -87,6 +128,11 @@ class AminoPhiPsi:
 				phiValue = self.calcDihedralAngle( self.dicContent.get( str( i-1 ) ).getPosC(), self.dicContent.get( str( i ) ).getPosN(), self.dicContent.get( str( i ) ).getPosCA(), self.dicContent.get( str( i ) ).getPosC() )
 			if i < len( self.dicContent ):
 				psiValue = self.calcDihedralAngle( self.dicContent.get( str( i ) ).getPosN(), self.dicContent.get( str( i ) ).getPosCA(), self.dicContent.get( str( i ) ).getPosC(), self.dicContent.get( str( i+1 ) ).getPosN() )
+
+
+			if phiValue < 180.0:
+				diff = 180 - phiValue
+				print diff
 
 			self.phi.append( phiValue )
 			self.psi.append( psiValue )

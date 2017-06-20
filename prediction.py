@@ -2,51 +2,76 @@ from mapAminoAcids import AminoAcids
 from aminoPhiPsi import AminoPhiPsi
 from pdbReader import PDBReader
 from pdbAligner import PDBAligner
+import numpy as np
+import rmsd
 import sys
 
-def calcRMSD( fileA, fileB ):
-	experimental = PDBReader( fileA )
-	modified = PDBReader( fileB )
+class Prediction( object ):
+	experimental = None
+	modified = None
 
-	modified.adjustAtoms( experimental.atoms, experimental.aminoAcids )
+	def readFiles( self, fileA, fileB ):
+		self.experimental = PDBReader( fileA )
+		self.modified = PDBReader( fileB )
 
-	experimental.calcBackbonePos()
-	modified.calcBackbonePos()
-	experimental.calcCaPos()
-	modified.calcCaPos()
+		self.modified.adjustAtoms( self.experimental.atoms, self.experimental.aminoAcids )
+		self.experimental.adjustAtoms( self.modified.atoms, self.modified.aminoAcids )
 
-	print( len( experimental.atoms ), len( modified.atoms ) )
-	print( experimental.atoms )
-	print( modified.atoms )
+		self.experimental.calcBackbonePos()
+		self.modified.calcBackbonePos()
+		self.experimental.calcCaPos()
+		self.modified.calcCaPos()
 
-	aligner = PDBAligner()
-	print "{:15s} {:6.2f}".format( "CA RMSD:", aligner.calcRMSD( experimental.alpha, modified.alpha ) )
-	#print "{:15s} {:6.2f}".format( "Backbone RMSD:", aligner.calcRMSD( experimental.backbone, modified.backbone ) )
-	#print "{:15s} {:6.2f}".format( "All atoms RMSD:", aligner.calcRMSD( experimental.posAtoms, modified.posAtoms ) )
+	def calcKabschRMSD( self ):
+		P = np.array( self.experimental.posAtoms )
+		Q = np.array( self.modified.posAtoms )
+		#print rmsd.kabsch_rmsd( P, Q )
+		P -= rmsd.centroid( P )
+		Q -= rmsd.centroid( Q )
+		print "{:15s} {:6.2f}".format( "Kabsch RMSD:", rmsd.kabsch_rmsd( P, Q ) )
 
-sequence = raw_input( "- Enter the desired aminoacid sequence or use the default (YGGFM) by pressing 'Enter': " )
+	def calcRMSD( self ):
+		print( len( self.experimental.atoms ), len( self.modified.atoms ) )
+		#print( self.experimental.atoms )
+		#print( self.modified.atoms )
+		print( len( self.experimental.backbone ), len( self.modified.backbone ) )
+		print( len( self.experimental.alpha ), len( self.modified.alpha ) )
 
-if len( sequence ) == 0:
-	sequence = "YGGFM"
+		aligner = PDBAligner()
+		print "{:15s} {:6.2f}".format( "CA RMSD:", aligner.calcRMSD( self.experimental.alpha, self.modified.alpha ) )
+		print "{:15s} {:6.2f}".format( "Backbone RMSD:", aligner.calcRMSD( self.experimental.backbone, self.modified.backbone ) )
+		print "{:15s} {:6.2f}".format( "All atoms RMSD:", aligner.calcRMSD( self.experimental.posAtoms, self.modified.posAtoms ) )
 
-if len( sequence ) > 1:
-	fileName = "1PLX-P.pdb"
-	aminoAcids = AminoAcids( sequence, fileName )
-	print "OK - The file '1PLX-P.pdb' with the peptide bonds was generated."
-	name = raw_input( "- Enter the PDB filename to calc the dihedral angles: Phi and Psi, or use the '" + "1PLX-P.pdb" + "' by pressing 'Enter':" )
+def main():
+	sequence = raw_input( "- Enter the desired aminoacid sequence or use the default (YGGFM) by pressing 'Enter': " )
 
-	if len( name ) == 0:
-		name = fileName
+	if len( sequence ) == 0:
+		sequence = "YGGFM"
 
-	aminoPhiPsi = AminoPhiPsi( name )
-	print "OK - The file 'aminoPhiPsi.txt' with the dihedral angles by amino acid was generated."
-	print "OK - The file 'ramachandran.png' with the ramachandran map was generated."
+	if len( sequence ) > 1:
+		fileName = "1PLX-P.pdb"
+		aminoAcids = AminoAcids( sequence, fileName )
+		print "OK - The file '1PLX-P.pdb' with the peptide bonds was generated."
+		name = raw_input( "- Enter the PDB filename to calc the dihedral angles: Phi and Psi, or use the '" + "1PLX-P.pdb" + "' by pressing 'Enter':" )
 
-	# TODO: set phi and psi in 180 degrees
-	calcRMSD( "files/1PLX.pdb", "1PLX-P.pdb" )
-	# TODO: get the file 1PLX-F.pdb from ACOR
-	#calcRMSD( "files/1PLX.pdb", "1PLX-F.pdb" )
-	# TODO: plot chart RMSD VS algorithm generation
+		if len( name ) == 0:
+			name = fileName
 
-else:
-	print "ERROR - You must need specify at least two amino acids!"
+		aminoPhiPsi = AminoPhiPsi( name )
+		print "OK - The file 'aminoPhiPsi.txt' with the dihedral angles by amino acid was generated."
+		print "OK - The file 'ramachandran.png' with the ramachandran map was generated."
+
+		prediction = Prediction()
+		# TODO: set phi and psi in 180 degrees
+		prediction.readFiles( "files/1PLX.pdb", "1PLX-P.pdb" )
+		prediction.calcRMSD()
+		prediction.calcKabschRMSD()
+		# TODO: get the file 1PLX-F.pdb from ACOR
+		#calcRMSD( "files/1PLX.pdb", "1PLX-F.pdb" )
+		# TODO: plot chart RMSD VS algorithm generation
+
+	else:
+		print "ERROR - You must need specify at least two amino acids!"
+
+if __name__ == "__main__":
+    main()
