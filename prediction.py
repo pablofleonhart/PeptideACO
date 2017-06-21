@@ -17,6 +17,11 @@ class Prediction( object ):
 		self.modified.adjustAtoms( self.experimental.atoms, self.experimental.aminoAcids )
 		self.experimental.adjustAtoms( self.modified.atoms, self.modified.aminoAcids )
 
+		print self.experimental.atoms
+		print self.experimental.posAtoms
+		print self.modified.atoms
+		print self.modified.posAtoms
+
 		self.experimental.calcBackbonePos()
 		self.modified.calcBackbonePos()
 		self.experimental.calcCaPos()

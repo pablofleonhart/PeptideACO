@@ -12,10 +12,10 @@ class PDBReader:
 	posAtoms = []
 	backbone = []
 	alpha = []
+	dicContent = {}
 
 	def __init__( self, fileName ):
 		self.fileName = fileName
-
 		self.readFile()
 
 	def isNumber( self, value ):
@@ -55,6 +55,7 @@ class PDBReader:
 					elif self.isNumber( line[5] ):
 						aminoAcid = int( line[5] )
 
+					self.dicContent[( atom + ":" + line[3] )] = line
 					posInit = 0
 
 					for i in xrange( len( line ) ):
@@ -68,6 +69,7 @@ class PDBReader:
 					self.aminoAcids.append( aminoAcid )
 
 		file.close()
+		print self.dicContent
 
 	def adjustAtoms( self, refAtoms, refAminoAcids ):
 		auxAtoms = []
