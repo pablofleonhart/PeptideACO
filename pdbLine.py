@@ -8,8 +8,10 @@ class PDBLine( object ):
 	posZ = 0
 	ns1 = 0
 	ns2 = 0
+	content = None
 
 	def __init__( self, content ):
+		self.content = content
 		if content is not None:
 			self.tag = content[0]
 			self.sequence = content[1]
