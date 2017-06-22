@@ -14,6 +14,7 @@ class PDBReader:
 	backbone = []
 	alpha = []
 	content = []
+	aAcids = []
 
 	def __init__( self, fileName ):
 		self.fileName = fileName
@@ -31,6 +32,7 @@ class PDBReader:
 		self.atoms = []
 		self.aminoAcids = []
 		self.posAtoms = []
+		self.aAcids = []
 
 		finish = False
 		file = open( self.fileName, "r" )
@@ -68,28 +70,16 @@ class PDBReader:
 					self.posAtoms.append( pos )
 					self.aminoAcids.append( aminoAcid )
 					self.content.append( line )
+					self.aAcids.append( line[3] )
 
 		file.close()
-		for i in xrange( len( self.content ) ):
-			print self.content[i]
-
-	def writeFile( self ):
-		#file = open( str( "_" + self.fileName ), "w" )
-
-		for at, aa in zip( self.atoms, self.aAcids ):
-			key = str( at + ":" + aa )
-
-			index = zip( self.atoms, self.aAcids ).index( ( at, aa ) )
-			print index, key, self.posAtoms[index]
-			print self.content.get( key ).content
-
-		#file.close()
 
 	def adjustAtoms( self, refAtoms, refAminoAcids ):
 		auxAtoms = []
 		auxPos = []
 		auxAminoAcids = []
 		auxContent = []
+		auxAA = []
 
 		for i in xrange( len( refAtoms ) ):  
 			if ( refAtoms[i], refAminoAcids[i] ) in zip( self.atoms, self.aminoAcids ):
@@ -99,16 +89,18 @@ class PDBReader:
 				auxPos.append( self.posAtoms.pop( index ) )
 				auxAminoAcids.append( self.aminoAcids.pop( index ) )
 				auxContent.append( self.content.pop( index ) )
+				auxAA.append( self.aAcids.pop( index ) )
 
 		self.atoms = copy.deepcopy( auxAtoms )
 		self.posAtoms = copy.deepcopy( auxPos )
 		self.aminoAcids = copy.deepcopy( auxAminoAcids )
-		self.content = copy.deepcopy( auxContent )
+		self.aAcids = copy.deepcopy( auxAA )
+		#self.content = copy.deepcopy( auxContent )
 
-		print "#######################################"
+		'''print "#######################################"
 		for i in xrange( len( self.content ) ):
 			print self.content[i]
-		print "#######################################"
+		print "#######################################"'''
 
 	def calcBackbonePos( self ):
 		self.backbone = []

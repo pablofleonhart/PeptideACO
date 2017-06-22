@@ -175,7 +175,6 @@ class AminoAcids( object ):
 	def renameAtom( self, atom, amino ):
 		if amino == "TYR" and atom == "2H":
 			return "H2"
-
 		else:			
 			if self.dicNames.get( atom ) is not None:
 				return self.dicNames.get( atom )

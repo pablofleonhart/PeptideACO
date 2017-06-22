@@ -10,14 +10,19 @@ class Backbone:
 	aminoAcid = None
 
 	def setPosAtom( self, atom, aminoAcid, positions ):
+		valid = False
 		if atom == self.NITROGEN_TAG:
 			self.posN = positions
+			valid = True
 		elif atom == self.ALPHA_TAG:
 			self.posCA = positions
+			valid = True
 		elif atom == self.CARBON_TAG:
 			self.posC = positions
+			valid = True
 
-		self.aminoAcid = aminoAcid
+		if valid:
+			self.aminoAcid = aminoAcid
 
 	def getPosN( self ):
 		return copy.deepcopy( self.posN )
