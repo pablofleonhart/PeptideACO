@@ -1,4 +1,5 @@
-from pdbLine import PDBLine
+from atom import Atom
+from backbone import Backbone
 import copy
 
 class PDBReader:
@@ -15,24 +16,20 @@ class PDBReader:
 	alpha = []
 	content = []
 	aAcids = []
+	dicContent = {}
 
 	def __init__( self, fileName ):
 		self.fileName = fileName
 		self.readFile()
-
-	def isNumber( self, value ):
-		try:
-			int( value )
-			return True
-
-		except ValueError:
-			return False
 
 	def readFile( self ):
 		self.atoms = []
 		self.aminoAcids = []
 		self.posAtoms = []
 		self.aAcids = []
+		backbone = None
+		key = 0
+		index = 0
 
 		finish = False
 		file = open( self.fileName, "r" )
@@ -44,33 +41,30 @@ class PDBReader:
 				finish = True
 
 			else:
-				line = line.split()
+				atom = Atom( line )
 
-				if line[0] == self.END_TAG:
+				if atom.tag.strip() == self.END_TAG:
 					finish = True
 
-				elif line[0] == self.ATOM_TAG:
-					atom = line[2]
+				elif atom.tag.strip() == self.ATOM_TAG:
+					self.atoms.append( atom.atom )
+					self.posAtoms.append( atom.getPos() )
+					self.aminoAcids.append( int( atom.seqResidue ) )
+					self.content.append( atom )
+					self.aAcids.append( atom.residue )
 
-					if self.isNumber( line[4] ):
-						aminoAcid = int( line[4] )
+					if atom.seqResidue != key:
+						if key > 0:
+							self.dicContent[str( index )] = None
+							self.dicContent[str( index )] = backbone
+							index += 1
+						key = atom.seqResidue
+						backbone = Backbone()
 
-					elif self.isNumber( line[5] ):
-						aminoAcid = int( line[5] )
-			
-					posInit = 0
+					backbone.setPosAtom( atom.getAtom(), atom.getResidue(), atom.getPos() )
 
-					for i in xrange( len( line ) ):
-						if "." in line[i]:
-							posInit = i
-							break
-
-					pos = map( float, line[posInit:posInit+3] )
-					self.atoms.append( atom )
-					self.posAtoms.append( pos )
-					self.aminoAcids.append( aminoAcid )
-					self.content.append( line )
-					self.aAcids.append( line[3] )
+			self.dicContent[str( index )] = None
+			self.dicContent[str( index )] = backbone
 
 		file.close()
 
@@ -95,21 +89,15 @@ class PDBReader:
 		self.posAtoms = copy.deepcopy( auxPos )
 		self.aminoAcids = copy.deepcopy( auxAminoAcids )
 		self.aAcids = copy.deepcopy( auxAA )
-		#self.content = copy.deepcopy( auxContent )
-
-		'''print "#######################################"
-		for i in xrange( len( self.content ) ):
-			print self.content[i]
-		print "#######################################"'''
 
 	def calcBackbonePos( self ):
 		self.backbone = []
 		for i in range( len( self.atoms ) ):
-			if self.atoms[i] in self.BACKBONE_ATOMS:
+			if self.atoms[i].strip() in self.BACKBONE_ATOMS:
 				self.backbone.append( self.posAtoms[i] )
 
 	def calcCaPos( self ):
 		self.alpha = []
 		for i in range( len( self.atoms ) ):
-			if self.atoms[i] == self.ALPHA_CARBON:
+			if self.atoms[i].strip() == self.ALPHA_CARBON:
 				self.alpha.append( self.posAtoms[i] )

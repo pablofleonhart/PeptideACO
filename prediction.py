@@ -31,15 +31,15 @@ class Prediction( object ):
 			print "OK - The file 'aminoPhiPsi.txt' with the dihedral angles by amino acid was generated."
 			print "OK - The file 'ramachandran.png' with the ramachandran map was generated."
 
-			#print aminoPhiPsi.get_angles()
+			print aminoPhiPsi.get_angles()
 			aminoPhiPsi.rotate_omegas()
-			#print aminoPhiPsi.get_omegas()
+			print aminoPhiPsi.get_omegas()
 			#print aminoPhiPsi.get_angles()
-			pis = [math.radians(360.0),math.radians(176.63),
+			'''pis = [math.radians(360.0),math.radians(176.63),
 				   math.radians(148.48),math.radians(-21.96),
 				   math.radians(114.02),math.radians(29.89),
 				   math.radians(-88.0),math.radians(-38.16),
-				   math.radians(-74.24),math.radians(360.0)]
+				   math.radians(-74.24),math.radians(360.0)]'''
 			#print pis
 			aminoPhiPsi.set_peptide_bond_angles()
 			#print aminoPhiPsi.get_peptide_bond_angles()		
@@ -49,7 +49,7 @@ class Prediction( object ):
 			# TODO: set phi and psi in 180 degrees
 			self.readFiles( "files/1PLX.pdb", "1PLX-P.pdb" )
 			self.calcRMSD()
-			self.calcKabschRMSD()
+			self.calcKabschRMSD
 			# TODO: get the file 1PLX-F.pdb from ACOR
 			#calcRMSD( "files/1PLX.pdb", "1PLX-F.pdb" )
 			# TODO: plot chart RMSD VS algorithm generation
@@ -64,10 +64,10 @@ class Prediction( object ):
 		self.modified.adjustAtoms( self.experimental.atoms, self.experimental.aminoAcids )
 		self.experimental.adjustAtoms( self.modified.atoms, self.modified.aminoAcids )
 
-		'''print self.experimental.atoms
+		print self.experimental.atoms
 		print self.experimental.posAtoms
 		print self.modified.atoms
-		print self.modified.posAtoms'''
+		print self.modified.posAtoms
 
 		self.experimental.calcBackbonePos()
 		self.modified.calcBackbonePos()

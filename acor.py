@@ -42,8 +42,8 @@ def rotate_to( ang, atoms, aminoAcids, posAtoms ):
         if i + min( aminoAcids) <= max(aminoAcids):
             #ROTATE PHI
             #print atoms, aminoAcids
-            n_i = zip(atoms, aminoAcids).index(("N", i + min(aminoAcids)))   
-            ca_i = zip(atoms, aminoAcids).index(("CA", i + min(aminoAcids)))
+            n_i = zip(atoms, aminoAcids).index((" N  ", i + min(aminoAcids)))   
+            ca_i = zip(atoms, aminoAcids).index((" CA ", i + min(aminoAcids)))
             current_angles = angles
             #print current_angles
             dphi = math.atan2(math.sin(ang[2*i] - current_angles[2*i]), math.cos(ang[2*i] - current_angles[2*i]))
@@ -52,13 +52,13 @@ def rotate_to( ang, atoms, aminoAcids, posAtoms ):
             ca_pos = posAtoms[ca_i]                
             ia = 0
             for atom in zip(atoms, aminoAcids):
-                if (i > 0) and (atom[1] > i + min(aminoAcids) or (atom[1] == i + min(aminoAcids) and (atom[0] not in NHC_ATOMS))): 
+                if (i > 0) and (atom[1] > i + min(aminoAcids) or (atom[1] == i + min(aminoAcids) and (atom[0].strip() not in NHC_ATOMS))): 
                     posAtoms[ia] = rotate_atom_around_bond(dphi, posAtoms[ia], n_pos, ca_pos)
                     #print(atom[0], atom[1])   
                 ia += 1        
             #ROTATE PSI    
-            c_i  = zip(atoms, aminoAcids).index(("C",  i + min(aminoAcids)))  
-            ca_i = zip(atoms, aminoAcids).index(("CA", i + min(aminoAcids)))
+            c_i  = zip(atoms, aminoAcids).index((" C  ",  i + min(aminoAcids)))  
+            ca_i = zip(atoms, aminoAcids).index((" CA ", i + min(aminoAcids)))
             current_angles = angles
             #print current_angles
             dpsi = math.atan2(math.sin(ang[2*i+1] - current_angles[2*i+1]), math.cos(ang[2*i+1] - current_angles[2*i+1]))              
@@ -66,7 +66,7 @@ def rotate_to( ang, atoms, aminoAcids, posAtoms ):
             ca_pos = posAtoms[ca_i]
             ia = 0
             for atom in zip(atoms, aminoAcids):
-                if (i+min(aminoAcids) < max(aminoAcids)) and (atom[1] > i+min(aminoAcids) or (atom[1] == i+min(aminoAcids) and (atom[0]=="O"))): 
+                if (i+min(aminoAcids) < max(aminoAcids)) and (atom[1] > i+min(aminoAcids) or (atom[1] == i+min(aminoAcids) and (atom[0]==" O  "))): 
                     posAtoms[ia] = rotate_atom_around_bond(dpsi, posAtoms[ia], ca_pos, c_pos)
                     #print(atom[0], atom[1])          
             ia += 1
@@ -95,7 +95,7 @@ def calcKabschRMSD( exp, mod ):
     #print "{:15s} {:6.2f}".format( "Kabsch RMSD:", result )
     return result
 
-def evaluator(x,refPosAtoms, modPosAtoms):
+def evaluator( x, refPosAtoms, modPosAtoms ):
     '''rotation = []
     for i in xrange( len( x )+2 ):
         if i == 0 or i == len( x )+1:
@@ -130,7 +130,7 @@ def evaluator(x,refPosAtoms, modPosAtoms):
     ta = tAligner()
     f = ta.rmsd( transformation, refPosAtoms, copy.deepcopy( modPosAtoms ) )'''
     # calculate values for other responses
-    res = {'x1':f,'x2':f, 'x3':f,'x4':f, 'x5':f,'x6':f,'x7':f,'x8':f,'x9':f,'x10':f }
+    res = {'x1':f, 'x2':f, 'x3':f,'x4':f, 'x5':f,'x6':f,'x7':f,'x8':f,'x9':f,'x10':f }
     fitness = dict(Obj=f,**res)
     return fitness
 
@@ -296,7 +296,7 @@ def evolve(refPosAtoms, modPosAtoms,display):
     xi = 0.85
 
     # maximum iterations
-    maxiter = 1000
+    maxiter = 10
     # tolerance
     errormin = 0.01
 
@@ -335,7 +335,7 @@ def evolve(refPosAtoms, modPosAtoms,display):
     # sort according to fitness (last column)
     S = sorted(S, key=lambda row: row[-1],reverse = maximize)
     S = np.array(S)
-    init_observer(ind_file,S,parameters_v,response_v)
+    #init_observer(ind_file,S,parameters_v,response_v)
 
     # initilize weight array with pdf function
     w = np.zeros((nSize))
@@ -557,10 +557,10 @@ def evolve(refPosAtoms, modPosAtoms,display):
 
     total_time_s = time() - start_time
     total_time = datetime.timedelta(seconds=total_time_s)
-    total_time = formatTD(total_time)
+    #total_time = formatTD(total_time)
 
     # fix varibales values in output file
-    correct_par(ind_file_name,parameters_v)
+    #correct_par(ind_file_name,parameters_v)
 
     best_sol = sorted(best_sol, key=lambda row: row[-1],reverse = maximize)
 

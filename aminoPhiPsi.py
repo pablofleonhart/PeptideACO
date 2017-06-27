@@ -1,4 +1,4 @@
-from backbone import Backbone
+from pdbReader import PDBReader
 import copy
 import math
 import matplotlib.pyplot as plt
@@ -16,16 +16,11 @@ class AminoPhiPsi:
 	NH_ATOMS = ("N", "H", "1H", "H1", "2H", "H2", "3H", "H3")
 	NHC_ATOMS = ("N", "H", "1H", "H1", "2H", "H2", "3H", "H3", "CA")
 
-	dicContent = {}
 	phi = []
 	psi = []
 	angles = []
 	omega = []
-	aminoAcids = []
-	aAcids = []
-	posAtoms = []
-	atoms = []
-	dicResults = {}
+	pdb = None
 
 	def __init__( self, filename ):
 		self.filename = filename
@@ -47,99 +42,8 @@ class AminoPhiPsi:
 	def rad( self, x ):
 		return math.pi*x/180
 
-	def rotaxis2m( self, theta, vector ): 
-		vector=vector.copy() 
-		vector.normalize() 
-		c=numpy.cos(theta) 
-		s=numpy.sin(theta) 
-		t=1-c 
-		x, y, z=vector.get_array() 
-		rot=numpy.zeros((3, 3)) 
-		# 1st row 
-		rot[0, 0]=t*x*x+c 
-		rot[0, 1]=t*x*y-s*z 
-		rot[0, 2]=t*x*z+s*y 
-		# 2nd row 
-		rot[1, 0]=t*x*y+s*z 
-		rot[1, 1]=t*y*y+c 
-		rot[1, 2]=t*y*z-s*x 
-		# 3rd row 
-		rot[2, 0]=t*x*z-s*y 
-		rot[2, 1]=t*y*z+s*x 
-		rot[2, 2]=t*z*z+c 
-		return rot
-
-	def AxB( self, A, B ):   
-		A_linhas = len(A)
-		A_colunas = len(A[0])
-		B_linhas = len(B)
-		B_colunas = len(B[0])
-		if A_colunas == B_linhas:
-			comum = A_colunas
-			M = [[sum(A[m][n] * B[n][p] for n in range(comum)) \
-				for p in range(B_colunas)] for m in range(A_linhas)]
-			return M
-		else:
-			return -1
-
 	def readFile( self ):
-		if self.filename is not None:
-			pdb = open( self.filename, "r" )
-			stop = False
-			key = 0
-			index = 0
-			backbone = None
-			self.aminoAcids = []
-			self.posAtoms = []
-			self.atoms = []
-			self.aAcids = []
-			ii = 0
-
-			while not stop:
-				line = pdb.readline()
-				if not line:
-					stop = True
-				else:
-					line = line.split()
-					if line[0] == self.END_TAG:
-						stop = True
-					elif line[0] == self.ATOM_TAG:
-						atom = line[2]
-						if self.isNumber( line[4] ):
-							aminoAcid = int( line[4] )
-
-						elif self.isNumber( line[5] ):
-							aminoAcid = int( line[5] )
-
-						posInit = 0
-						self.atoms.append( atom )
-						self.aminoAcids.append( aminoAcid )
-
-						for i in xrange( len( line ) ):
-							if "." in line[i]:
-								posInit = i
-								break
-
-						self.dicResults[str( ii )] = line
-						ii += 1
-
-						if aminoAcid != key:
-							if key > 0:
-								self.dicContent[str( index )] = None
-								self.dicContent[str( index )] = backbone
-								index += 1
-							key = aminoAcid
-							backbone = Backbone()
-
-						pos = map( float, line[posInit:posInit + 3] )
-						self.posAtoms.append( pos )
-						backbone.setPosAtom( line[2], line[3], pos )
-						self.aAcids.append( line[3] )
-
-			self.dicContent[str( index )] = None
-			self.dicContent[str( index )] = backbone
-
-		#print self.dicContent
+		self.pdb = PDBReader( self.filename )
 
 	def calcAngles( self ):
 		file = open( "aminoPhiPsi.txt", "w" )
@@ -149,20 +53,16 @@ class AminoPhiPsi:
 		self.angles = []
 		self.omega = []
 
-		for i in range ( 0, len( self.dicContent ) ):
+		for i in range ( 0, len( self.pdb.dicContent ) ):
 			phiValue = 360.00
 			psiValue = 360.00
 			omegaValue = 360.00
 
 			if i > 0:
-				phiValue = self.calcDihedralAngle( self.dicContent.get( str( i-1 ) ).getPosC(), self.dicContent.get( str( i ) ).getPosN(), self.dicContent.get( str( i ) ).getPosCA(), self.dicContent.get( str( i ) ).getPosC() )
-			if i < len( self.dicContent )-1:
-				psiValue = self.calcDihedralAngle( self.dicContent.get( str( i ) ).getPosN(), self.dicContent.get( str( i ) ).getPosCA(), self.dicContent.get( str( i ) ).getPosC(), self.dicContent.get( str( i+1 ) ).getPosN() )
-				omegaValue = self.calcDihedralAngle( self.dicContent.get( str( i ) ).getPosCA(), self.dicContent.get( str( i ) ).getPosC(), self.dicContent.get( str( i+1 ) ).getPosN(), self.dicContent.get( str( i+1 ) ).getPosCA() )
-
-			'''if phiValue < 180.0:
-				diff = 180 - phiValue
-				print self.rad( diff )'''
+				phiValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i-1 ) ).getPosC(), self.pdb.dicContent.get( str( i ) ).getPosN(), self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC() )
+			if i < len( self.pdb.dicContent )-1:
+				psiValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i ) ).getPosN(), self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC(), self.pdb.dicContent.get( str( i+1 ) ).getPosN() )
+				omegaValue = self.calcDihedralAngle( self.pdb.dicContent.get( str( i ) ).getPosCA(), self.pdb.dicContent.get( str( i ) ).getPosC(), self.pdb.dicContent.get( str( i+1 ) ).getPosN(), self.pdb.dicContent.get( str( i+1 ) ).getPosCA() )
 
 			self.phi.append( phiValue )
 			self.psi.append( psiValue )
@@ -170,7 +70,7 @@ class AminoPhiPsi:
 			self.angles.append( self.rad( psiValue ) )
 			self.omega.append( omegaValue )
 
-			file.write( "{:5s}  {:7.2f}  {:7.2f}  {:7.2f}".format( self.dicContent.get( str( i ) ).getAminoAcid(), phiValue, psiValue, omegaValue ) + "\n" )
+			file.write( "{:5s}  {:7.2f}  {:7.2f}  {:7.2f}".format( self.pdb.dicContent.get( str( i ) ).getAminoAcid(), phiValue, psiValue, omegaValue ) + "\n" )
 
 		file.close()
 
@@ -200,65 +100,65 @@ class AminoPhiPsi:
 		return angle
 
 	def rotate_omegas( self, angles=[] ):
-		n_aa = len( self.aminoAcids )
-		#print n_aa
+		n_aa = len( self.pdb.aminoAcids )
+		print min( self.pdb.aminoAcids )
 		if len( angles ) == 0:
 			angles = [math.pi]*n_aa
 			for i in xrange( n_aa ):
-				if i + min( self.aminoAcids) < max(self.aminoAcids):
+				if i + min( self.pdb.aminoAcids ) < max( self.pdb.aminoAcids ):
 					#ROTATE OMEGA
 					#print 'i',i, self.dicContent.get( str( i ) )
-					c_i  = zip(self.atoms, self.aminoAcids).index(("C",  i + min(self.aminoAcids))) #C from aminoacid i		
-					nn_i = zip(self.atoms, self.aminoAcids).index(("N", i + 1 + min(self.aminoAcids))) #N from aminoacid i+1					
+					c_i  = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" C  ",  i + min(self.pdb.aminoAcids))) #C from aminoacid i		
+					nn_i = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" N  ", i + 1 + min(self.pdb.aminoAcids))) #N from aminoacid i+1					
 					current_omegas = self.omega
 					domega = math.atan2( math.sin( angles[i] - current_omegas[i]), math.cos(angles[i] - current_omegas[i]))
 					#print "domega", domega
-					c_pos  = self.posAtoms[c_i]
-					nn_pos = self.posAtoms[nn_i]
+					c_pos  = self.pdb.posAtoms[c_i]
+					nn_pos = self.pdb.posAtoms[nn_i]
 					#print "c_i", c_i, c_pos
 					#print "nn_i", nn_i, nn_pos
 					ia = 0
-					for atom in zip(self.atoms, self.aminoAcids):
-						if (atom[1] > i + 1 + min(self.aminoAcids) or (atom[1] == i + 1 + min(self.aminoAcids) and (atom[0] != "N"))): 
-							self.posAtoms[ia] = self.rotate_atom_around_bond(domega, self.posAtoms[ia], c_pos, nn_pos)
-							'''print self.atoms[ia], self.aAcids[ia], self.posAtoms[ia]
+					for atom in zip(self.pdb.atoms, self.pdb.aminoAcids):
+						if (atom[1] > i + 1 + min(self.pdb.aminoAcids) or (atom[1] == i + 1 + min(self.pdb.aminoAcids) and (atom[0] != " N  "))): 
+							self.pdb.posAtoms[ia] = self.rotate_atom_around_bond(domega, self.pdb.posAtoms[ia], c_pos, nn_pos)
+							'''print self.pdb.atoms[ia], self.pdb.aAcids[ia], self.pdb.posAtoms[ia]
 							print i
-							self.dicContent.get( str( i ) ).setPosAtom( self.atoms[ia], self.aAcids[ia], self.posAtoms[ia] )'''
+							self.dicContent.get( str( i ) ).setPosAtom( self.pdb.atoms[ia], self.pdb.aAcids[ia], self.pdb.posAtoms[ia] )'''
 						ia += 1
 
 	def rotate_to( self, ang ):
 		#print "ang", ang
-		n_aa = len( self.aminoAcids )
+		n_aa = len( self.pdb.aminoAcids )
 		for i in xrange(n_aa):
-			if i + min( self.aminoAcids) <= max(self.aminoAcids):
+			if i + min( self.pdb.aminoAcids) <= max(self.pdb.aminoAcids):
 			#ROTATE PHI
-				#print self.atoms, self.aminoAcids
-				n_i = zip(self.atoms, self.aminoAcids).index(("N", i + min(self.aminoAcids)))   
-				ca_i = zip(self.atoms, self.aminoAcids).index(("CA", i + min(self.aminoAcids)))
+				#print self.pdb.atoms, self.pdb.aminoAcids
+				n_i = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" N  ", i + min(self.pdb.aminoAcids)))   
+				ca_i = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" CA ", i + min(self.pdb.aminoAcids)))
 				current_angles = self.angles
 				#print current_angles
 				dphi = math.atan2(math.sin(ang[2*i] - current_angles[2*i]), math.cos(ang[2*i] - current_angles[2*i]))
 				#print "dphi", self.degrees( dphi )
-				n_pos = self.posAtoms[n_i]
-				ca_pos = self.posAtoms[ca_i]                
+				n_pos = self.pdb.posAtoms[n_i]
+				ca_pos = self.pdb.posAtoms[ca_i]                
 				ia = 0
-				for atom in zip(self.atoms, self.aminoAcids):
-					if (i > 0) and (atom[1] > i + min(self.aminoAcids) or (atom[1] == i + min(self.aminoAcids) and (atom[0] not in self.NHC_ATOMS))): 
-						self.posAtoms[ia] = self.rotate_atom_around_bond(dphi, self.posAtoms[ia], n_pos, ca_pos)
+				for atom in zip(self.pdb.atoms, self.pdb.aminoAcids):
+					if (i > 0) and (atom[1] > i + min(self.pdb.aminoAcids) or (atom[1] == i + min(self.pdb.aminoAcids) and (atom[0] not in self.NHC_ATOMS))): 
+						self.pdb.posAtoms[ia] = self.rotate_atom_around_bond(dphi, self.pdb.posAtoms[ia], n_pos, ca_pos)
 						#print(atom[0], atom[1])   
 					ia += 1        
 				#ROTATE PSI    
-				c_i  = zip(self.atoms, self.aminoAcids).index(("C",  i + min(self.aminoAcids)))  
-				ca_i = zip(self.atoms, self.aminoAcids).index(("CA", i + min(self.aminoAcids)))
+				c_i  = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" C  ",  i + min(self.pdb.aminoAcids)))  
+				ca_i = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" CA ", i + min(self.pdb.aminoAcids)))
 				current_angles = self.angles
 				#print current_angles
 				dpsi = math.atan2(math.sin(ang[2*i+1] - current_angles[2*i+1]), math.cos(ang[2*i+1] - current_angles[2*i+1]))              
-				c_pos = self.posAtoms[c_i] 
-				ca_pos = self.posAtoms[ca_i]
+				c_pos = self.pdb.posAtoms[c_i] 
+				ca_pos = self.pdb.posAtoms[ca_i]
 				ia = 0
-				for atom in zip(self.atoms, self.aminoAcids):
-					if (i+min(self.aminoAcids) < max(self.aminoAcids)) and (atom[1] > i+min(self.aminoAcids) or (atom[1] == i+min(self.aminoAcids) and (atom[0]=="O"))): 
-						self.posAtoms[ia] = self.rotate_atom_around_bond(dpsi, self.posAtoms[ia], ca_pos, c_pos)
+				for atom in zip(self.pdb.atoms, self.pdb.aminoAcids):
+					if (i+min(self.pdb.aminoAcids) < max(self.pdb.aminoAcids)) and (atom[1] > i+min(self.pdb.aminoAcids) or (atom[1] == i+min(self.pdb.aminoAcids) and (atom[0]==" O  "))): 
+						self.pdb.posAtoms[ia] = self.rotate_atom_around_bond(dpsi, self.pdb.posAtoms[ia], ca_pos, c_pos)
 						#print(atom[0], atom[1])          
 					ia += 1
             
@@ -277,22 +177,22 @@ class AminoPhiPsi:
 
 	def get_ca_info(self):
 		ca_info = []
-		for a in zip(self.atoms, self.aminoAcids, self.posAtoms):
-			if a[0] == self.ALPHA_TAG:
+		for a in zip(self.pdb.atoms, self.pdb.aminoAcids, self.pdb.posAtoms):
+			if a[0].strip() == self.ALPHA_TAG:
 				ca_info.append(a)
 		return copy.deepcopy(ca_info)
 
 	def get_N_info(self):
 		n_info = []
-		for a in zip(self.atoms, self.aminoAcids, self.posAtoms):
-			if a[0] == self.NITROGEN_TAG:
+		for a in zip(self.pdb.atoms, self.pdb.aminoAcids, self.pdb.posAtoms):
+			if a[0].strip() == self.NITROGEN_TAG:
 				n_info.append(a)
 		return copy.deepcopy(n_info)
 
 	def get_C_info(self):
 		c_info = []
-		for a in zip(self.atoms, self.aminoAcids, self.posAtoms):
-			if a[0] == self.CARBON_TAG:
+		for a in zip(self.pdb.atoms, self.pdb.aminoAcids, self.pdb.posAtoms):
+			if a[0].strip() == self.CARBON_TAG:
 				c_info.append(a)
 		return copy.deepcopy(c_info) 
 
@@ -319,7 +219,6 @@ class AminoPhiPsi:
 		ca = self.get_ca_info()
 		n  = self.get_N_info()
 		c  = self.get_C_info()      
-		print ca
 		for aa in xrange(len(ca)):
 			name   = ca[aa][1]
 			if aa > 0:
@@ -369,37 +268,37 @@ class AminoPhiPsi:
 		return angles 
 
 	def set_peptide_bond_angles(self, angles=[]):
-		n_aa = len( self.aminoAcids )
+		n_aa = len( self.pdb.aminoAcids )
 		if len(angles) == 0:
 			angles = [math.radians(120.0)]*n_aa
 		for i in xrange(n_aa):
-			if i + min(self.aminoAcids) < max(self.aminoAcids):
+			if i + min(self.pdb.aminoAcids) < max(self.pdb.aminoAcids):
 				#ROTATE ALPHA
-				c_i   = zip(self.atoms, self.aminoAcids).index(("C",  i + min(self.aminoAcids)))     # C from aminoacid i
-				nn_i  = zip(self.atoms, self.aminoAcids).index(("N",  i + 1 + min(self.aminoAcids))) # N from aminoacid i+1
+				c_i   = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" C  ",  i + min(self.pdb.aminoAcids)))     # C from aminoacid i
+				nn_i  = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" N  ",  i + 1 + min(self.pdb.aminoAcids))) # N from aminoacid i+1
 				nh_i  = -1.0
 				for a in self.NH_ATOMS:
 					if a != "N":                                                 
-						nh_i  = zip(self.atoms, self.aminoAcids).index((a,  i + 1 + min(self.aminoAcids))) if (a,  i + 1 + min(self.aminoAcids)) in zip(self.atoms, self.aminoAcids) else -1
+						nh_i  = zip(self.pdb.atoms, self.pdb.aminoAcids).index((a,  i + 1 + min(self.pdb.aminoAcids))) if (a,  i + 1 + min(self.pdb.aminoAcids)) in zip(self.pdb.atoms, self.pdb.aminoAcids) else -1
 						if nh_i >= 0:
 							break
 					    
-				nca_i = zip(self.atoms, self.aminoAcids).index(("CA", i + 1 + min(self.aminoAcids))) #CA from aminoacid i+1
+				nca_i = zip(self.pdb.atoms, self.pdb.aminoAcids).index((" CA ", i + 1 + min(self.pdb.aminoAcids))) #CA from aminoacid i+1
 				current_alphas = self.get_peptide_bond_angles()
 				dalpha = math.atan2(math.sin(angles[i] - current_alphas[i]), math.cos(angles[i] - current_alphas[i]))
-				c_pos   = self.posAtoms[c_i]
-				nn_pos  = self.posAtoms[nn_i]
+				c_pos   = self.pdb.posAtoms[c_i]
+				nn_pos  = self.pdb.posAtoms[nn_i]
 				if nh_i >= 0:
-					nh_pos  = self.posAtoms[nh_i]
+					nh_pos  = self.pdb.posAtoms[nh_i]
 					current_alphaH = self.calc_angle_3(c_pos, nn_pos, nh_pos)
 					dalphaH = math.atan2(math.sin(angles[i] - current_alphaH), math.cos(angles[i] - current_alphaH)) 
-				nca_pos = self.posAtoms[nca_i]
+				nca_pos = self.pdb.posAtoms[nca_i]
 				ia = 0
-				for atom in zip(self.atoms, self.aminoAcids):
-					if (atom[1] > i + 1 + min(self.aminoAcids) or (atom[1] == i + 1 + min(self.aminoAcids) and (atom[0] not in self.NH_ATOMS))): 
-						self.posAtoms[ia] = self.bend_bonds(dalpha, self.posAtoms[ia], c_pos, nn_pos, nca_pos)
-					elif nh_i >= 0 and atom[1] == i + 1 + min(self.aminoAcids) and atom[0] in self.NH_ATOMS and atom[0] != "N":
-						self.posAtoms[ia] = self.bend_bonds(dalphaH, self.posAtoms[ia], c_pos, nn_pos, nh_pos)    
+				for atom in zip(self.pdb.atoms, self.pdb.aminoAcids):
+					if (atom[1] > i + 1 + min(self.pdb.aminoAcids) or (atom[1] == i + 1 + min(self.pdb.aminoAcids) and (atom[0] not in self.NH_ATOMS))): 
+						self.pdb.posAtoms[ia] = self.bend_bonds(dalpha, self.pdb.posAtoms[ia], c_pos, nn_pos, nca_pos)
+					elif nh_i >= 0 and atom[1] == i + 1 + min(self.pdb.aminoAcids) and atom[0] in self.NH_ATOMS and atom[0] != " N  ":
+						self.pdb.posAtoms[ia] = self.bend_bonds(dalphaH, self.pdb.posAtoms[ia], c_pos, nn_pos, nh_pos)    
 						#print(atom[0], atom[1])
 					ia += 1                   
 
@@ -430,20 +329,21 @@ class AminoPhiPsi:
 		countTotal = 1
 		acid = 0
 		aa = None
-		for z in range( 0, len( self.atoms ) ):
-			key = str( z )
-			#print len( self.dicResults.get( key ) )
-			#for y in range( 0, len( self.dicResults.get( key ) ) ):
-				#self.dicResults.get( key )[y][1] = countTotal
-				#self.dicResults.get( key )[y][4] = z+1
+		for z in range( 0, len( self.pdb.atoms ) ):
+			key = z
+			#print len( self.pdb.content[key] )
+			#for y in range( 0, len( self.pdb.content[key] ) ):
+				#self.pdb.content[key][y][1] = countTotal
+				#self.pdb.content[key][y][4] = z+1
 
-				#self.dicResults.get( key )[y][2] = self.renameAtom( self.dicResults.get( key )[y][2], self.dicResults.get( key )[y][3] )
+				#self.pdb.content[key][y][2] = self.renameAtom( self.pdb.content[key][y][2], self.pdb.content[key][y][3] )
 
-			if self.dicResults.get( key )[4] != aa:
-				aa = self.dicResults.get( key )[4]
+			if self.pdb.content[key].seqResidue != aa:
+				aa = self.pdb.content[key].seqResidue
 				acid += 1
-			pdbNew.write( self.pdbPattern.format( self.dicResults.get( key )[0], countTotal, self.dicResults.get( key )[2], " ", self.dicResults.get( key )[3], " ", \
-						  acid, " ", float( self.posAtoms[z][0] ), float( self.posAtoms[z][1] ), float( self.posAtoms[z][2] ), float( self.dicResults.get( key )[8] ), float( self.dicResults.get( key )[9] ) ) + "\n" )
+			pdbNew.write( self.pdbPattern.format( self.pdb.content[key].tag, countTotal, self.pdb.content[key].atom, self.pdb.content[key].locIndicator, self.pdb.content[key].residue, self.pdb.content[key].chainID, \
+						  acid, self.pdb.content[key].insResidue, float( self.pdb.posAtoms[z][0] ), float( self.pdb.posAtoms[z][1] ), float( self.pdb.posAtoms[z][2] ), \
+						  float( self.pdb.content[key].occupancy ), float( self.pdb.content[key].temperature ), self.pdb.content[key].symbol, self.pdb.content[key].chargeAtom ) + "\n" )
 
 			countTotal += 1
 

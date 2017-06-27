@@ -1,8 +1,9 @@
+from atom import Atom
 import copy
 
 class AminoAcids( object ):
 
-	pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s} {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}"
+	pdbPattern = "{:6s}{:5d} {:^4s}{:1s}{:3s} {:1s}{:4d}{:1s}   {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}          {:>2s}{:2s}"
 	ATOM_TAG = "ATOM"
 	END_TAG = "TER"
 	ATOM_REF = "CA"
@@ -34,18 +35,18 @@ class AminoAcids( object ):
 			"Y": "files/tyrosine.pdb",
 			"V": "files/valine.pdb" }
 
-	dicNames = { "2H" : "H",
-				 "2HB" : "HB2",
-				 "1HB" : "HB3",
-				 "1H" : "H1",
-				 "2HA" : "HA2",
-				 "1HA" : "HA3",
-				 "OC" : "OXT",
-				 "2HG" : "HG2",
-				 "1HG" : "HG3",
-				 "1HE" : "HE1",
-				 "2HE" : "HE2",
-				 "3HE" : "HE3" }
+	dicNames = { "2H" : " H  ",
+				 "2HB" : " HB2",
+				 "1HB" : " HB3",
+				 "1H" : " H1 ",
+				 "2HA" : " HA2",
+				 "1HA" : " HA3",
+				 "OC" : " OXT",
+				 "2HG" : " HG2",
+				 "1HG" : " HG3",
+				 "1HE" : " HE1",
+				 "2HE" : " HE2",
+				 "3HE" : " HE3" }
 
 	def __init__( self, sequence, fileName ):
 		self.sequence = sequence
@@ -57,9 +58,9 @@ class AminoAcids( object ):
 
 	def updatePositions( self, original, newValues ):
 		for j in range( 0, len( original ) ):
-			original[j][5] = newValues[j][0]
-			original[j][6] = newValues[j][1]
-			original[j][7] = newValues[j][2]
+			original[j].xCor = newValues[j][0]
+			original[j].yCor = newValues[j][1]
+			original[j].zCor = newValues[j][2]
 
 	def readSequence( self ):
 		for i in range( 0, len( self.sequence ) ):
@@ -83,15 +84,13 @@ class AminoAcids( object ):
 						if not line:
 							stop = True
 						else:
-							line = line.split()
-							if line[0] == self.END_TAG:
+							atom = Atom( line )
+							if atom.getTag() == self.END_TAG:
 								stop = True
-							elif line[0] == self.ATOM_TAG:
-								content.append( line )
-								atom = line[2]				
-								pos = map( float, line[5:8] )
-
-								if i == 0 and atom == self.ATOM_REF:
+							elif atom.getTag() == self.ATOM_TAG:
+								content.append( atom )
+								pos = map( float, atom.getPos() )
+								if i == 0 and atom.getAtom() == self.ATOM_REF:
 									translation = copy.deepcopy( pos )
 									for j in xrange( 3 ):
 										translation[j] *= -1
@@ -132,22 +131,22 @@ class AminoAcids( object ):
 
 			if keyContentI is not None:
 				for k in range( 0, len( keyContentI ) ):
-					if keyContentI[k][2] == self.OXIGEN_CARBOXYL:
+					if keyContentI[k].getAtom() == self.OXIGEN_CARBOXYL:
 						iIndexOC = k
-						iPosOC = map( float, keyContentI[k][5:8] )
+						iPosOC = map( float, keyContentI[k].getPos() )
 
-					elif keyContentI[k][2] in self.HYDROGEN_CARBOXYL:
+					elif keyContentI[k].getAtom() in self.HYDROGEN_CARBOXYL:
 						iIndexHC = k
 
 			if keyContentJ is not None:
 				for k in range( 0, len( keyContentJ ) ):
-					if keyContentJ[k][2] in self.HYDROGEN_AMINO:
+					if keyContentJ[k].getAtom() in self.HYDROGEN_AMINO:
 						jIndexHA = k
 
-					if keyContentJ[k][2] == self.NITROGEN:
-						jPosN = map( float, keyContentJ[k][5:8] )
+					if keyContentJ[k].getAtom() == self.NITROGEN:
+						jPosN = map( float, keyContentJ[k].getPos() )
 
-					positionsJ.append( map( float, keyContentJ[k][5:8] ) )
+					positionsJ.append( map( float, keyContentJ[k].getPos() ) )
 
 			if iIndexOC > iIndexHC:
 				keyContentI.pop( iIndexOC )
@@ -173,27 +172,31 @@ class AminoAcids( object ):
 		self.dicResults[str( key )] = keyContentI
 
 	def renameAtom( self, atom, amino ):
-		if amino == "TYR" and atom == "2H":
-			return "H2"
+		if amino == "TYR" and atom.strip() == "2H":
+			return " H2 "
 		else:			
-			if self.dicNames.get( atom ) is not None:
-				return self.dicNames.get( atom )
+			if self.dicNames.get( atom.strip() ) is not None:
+				return self.dicNames.get( atom.strip() )
 
 		return atom
 
 	def writePDBFile( self ):
 		pdbNew = open( self.fileName, "w" )
 		countTotal = 1
+		print 'len', len( self.dicResults )
 		for z in range( 0, len( self.dicResults ) ):
 			key = str( z )
 			for y in range( 0, len( self.dicResults.get( key ) ) ):
-				self.dicResults.get( key )[y][1] = countTotal
-				self.dicResults.get( key )[y][4] = z+1
+				self.dicResults.get( key )[y].serial = countTotal
+				self.dicResults.get( key )[y].seqResidue = z+1
 
-				self.dicResults.get( key )[y][2] = self.renameAtom( self.dicResults.get( key )[y][2], self.dicResults.get( key )[y][3] )
+				self.dicResults.get( key )[y].atom = self.renameAtom( self.dicResults.get( key )[y].atom, self.dicResults.get( key )[y].residue )
 
-				pdbNew.write( self.pdbPattern.format( self.dicResults.get( key )[y][0], countTotal, self.dicResults.get( key )[y][2], " ", self.dicResults.get( key )[y][3], " ", \
-							  z+1, " ", float( self.dicResults.get( key )[y][5] ), float( self.dicResults.get( key )[y][6] ), float( self.dicResults.get( key )[y][7] ), float( self.dicResults.get( key )[y][8] ), float( self.dicResults.get( key )[y][9] ) ) + "\n" )
+				pdbNew.write( self.pdbPattern.format( self.dicResults.get( key )[y].tag, self.dicResults.get( key )[y].serial, self.dicResults.get( key )[y].atom, \
+							  self.dicResults.get( key )[y].locIndicator, self.dicResults.get( key )[y].residue, self.dicResults.get( key )[y].chainID, self.dicResults.get( key )[y].seqResidue, \
+							  self.dicResults.get( key )[y].insResidue, float( self.dicResults.get( key )[y].xCor ), float( self.dicResults.get( key )[y].yCor ), \
+							  float( self.dicResults.get( key )[y].zCor ), float( self.dicResults.get( key )[y].occupancy ), float( self.dicResults.get( key )[y].temperature ), \
+							  self.dicResults.get( key )[y].symbol, self.dicResults.get( key )[y].chargeAtom ) + "\n" )
 
 				countTotal += 1
 

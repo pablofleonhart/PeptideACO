@@ -35,3 +35,6 @@ class Backbone:
 
 	def getAminoAcid( self ):
 		return self.aminoAcid
+
+	def _print( self ):
+		print self.aminoAcid, self.posN, self.posCA, self.posC
