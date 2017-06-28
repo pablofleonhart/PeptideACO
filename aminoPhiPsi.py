@@ -25,8 +25,8 @@ class AminoPhiPsi:
 	def __init__( self, filename ):
 		self.filename = filename
 		self.readFile()
-		self.calcAngles()
-		self.plotRamanchandran()
+		#self.calcAngles()
+		#self.plotRamanchandran()
 
 	def isNumber( self, value ):
 		try:
