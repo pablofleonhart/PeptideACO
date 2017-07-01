@@ -53,6 +53,7 @@ class AminoPhiPsi:
 		self.angles = []
 		self.omega = []
 
+		print "$$$", len( self.pdb.dicContent )
 		for i in range ( 0, len( self.pdb.dicContent ) ):
 			phiValue = 360.00
 			psiValue = 360.00
