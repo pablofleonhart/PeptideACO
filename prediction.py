@@ -49,7 +49,7 @@ class Prediction( object ):
 			# TODO: set phi and psi in 180 degrees
 			self.readFiles( "files/1PLX.pdb", "1PLX-P.pdb" )
 			self.calcRMSD()
-			self.calcKabschRMSD
+			self.calcKabschRMSD()
 			# TODO: get the file 1PLX-F.pdb from ACOR
 			#calcRMSD( "files/1PLX.pdb", "1PLX-F.pdb" )
 			# TODO: plot chart RMSD VS algorithm generation

@@ -92,7 +92,9 @@ class PDBReader:
 
 	def calcBackbonePos( self ):
 		self.backbone = []
+		print self.atoms
 		for i in range( len( self.atoms ) ):
+			print self.atoms[i].strip()
 			if self.atoms[i].strip() in self.BACKBONE_ATOMS:
 				self.backbone.append( self.posAtoms[i] )
 
